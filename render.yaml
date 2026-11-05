@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: datamind-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: AI_MAX_SOURCE_CHARS
+        value: 9000
+      - key: AI_MAX_OUTPUT_TOKENS
+        value: 1200
+      - key: AI_ESTIMATED_TPM_BUDGET
+        value: 6000
+      - key: AI_MAX_RETRIES
+        value: 0
+      - key: AI_MIN_INTERVAL_SECONDS
+        value: 8
+      - key: AI_FALLBACK_TO_DEMO
+        value: true
+      - key: MAX_UPLOAD_MB
+        value: 8
+      - key: MAX_TEXT_CHARS
+        value: 40000
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 12
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
