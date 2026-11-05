@@ -6,8 +6,32 @@ import {
   Save, Send, Sparkles, Star,
 } from 'lucide-react';
 import MermaidPreview from './MermaidPreview';
-import { copyToClipboard, downloadText } from '../utils/export';
+import { copyToClipboard, downloadText, exportResultVisual } from '../utils/export';
 import { FORMATS } from '../data/formats';
+
+function buildResultMarkdown(result) {
+  const parts = [
+    `# ${result.title || 'DataMind result'}`,
+    `Format: ${result.format || 'transformation'}`,
+    '',
+    result.content || '',
+  ];
+  const table = result.source_table || result.table;
+  if (table?.headers?.length) {
+    parts.push('', `## Complete source register (${table.rows?.length || 0} rows)`, '');
+    parts.push(`| ${table.headers.join(' | ')} |`);
+    parts.push(`| ${table.headers.map(() => '---').join(' | ')} |`);
+    for (const row of table.rows || []) parts.push(`| ${row.map((cell) => String(cell ?? '').replaceAll('|', '\\|')).join(' | ')} |`);
+  } else if (result.source_items?.length) {
+    parts.push('', `## Complete source register (${result.source_items.length} items)`, '');
+    result.source_items.forEach((item, index) => parts.push(`${index + 1}. **${item.label || `Item ${index + 1}`}** — ${item.details || ''}`));
+  }
+  if (result.coverage?.trackable) {
+    parts.push('', '## Source coverage', '', `- Expected: ${result.coverage.expected_count}`, `- Preserved: ${result.coverage.actual_count}`, `- Missing from extracted source: ${result.coverage.missing_count}`);
+    if (result.coverage.warning) parts.push('', result.coverage.warning);
+  }
+  return parts.join('\n');
+}
 
 export default function ResultPanel({ result, onChange, onRefine, onRegenerate, busy, onSave, saved, onToggleFavorite }) {
   const [editing, setEditing] = useState(false);
@@ -22,7 +46,7 @@ export default function ResultPanel({ result, onChange, onRefine, onRegenerate, 
 
   async function handleCopy() {
     try {
-      await copyToClipboard(result?.content || '');
+      await copyToClipboard(buildResultMarkdown(result || {}));
       setNotice('Copied to clipboard');
     } catch { setNotice('Clipboard access was blocked by this browser.'); }
     window.setTimeout(() => setNotice(''), 2000);
@@ -31,6 +55,21 @@ export default function ResultPanel({ result, onChange, onRefine, onRegenerate, 
   function saveEdit() {
     onChange({ ...result, content: draft });
     setEditing(false);
+  }
+
+  async function exportVisual() {
+    try {
+      await exportResultVisual({
+        title: result.title,
+        cards: result.cards || [],
+        table: result.source_table || result.table || null,
+        format: result.format || 'infographic',
+      });
+      setNotice('Visual PNG download started');
+    } catch (err) {
+      setNotice(err.message || 'Could not export this visual.');
+    }
+    window.setTimeout(() => setNotice(''), 3500);
   }
 
   async function submitRefine(event) {
@@ -56,19 +95,58 @@ export default function ResultPanel({ result, onChange, onRefine, onRegenerate, 
 
       {isFallback && <div className="inline-notice warning"><span className="status-dot muted" /> Gemini is temporarily unavailable or not configured. DataMind generated a local result so the workspace is not blank.</div>}
       {result.ai_error && <div className="small-muted">{result.ai_error}</div>}
-      {result.source_truncated && <div className="inline-notice warning"><span className="status-dot muted" /> Only the configured first portion of the source was sent to Gemini. Review the source field to see the full text.</div>}
+      {result.source_truncated && <div className="inline-notice warning"><span className="status-dot muted" /> The AI context was compacted to fit the provider budget. DataMind still preserves all source records it could extract below.</div>}
 
       <div className="result-toolbar">
         <div className="result-tabs"><span className="result-tab active"><Sparkles size={13} /> Result</span>{result.mermaid && <span className="result-tab"><span className="tiny-dot" /> Visual</span>}</div>
         <div className="result-actions">
           <button onClick={handleCopy}><Copy size={13} /> Copy</button>
-          <button onClick={() => downloadText(result.content || '', 'datamind-result.md', 'text/markdown;charset=utf-8')}><Download size={13} /> Export</button>
+          <button onClick={() => downloadText(buildResultMarkdown(result), 'datamind-complete-result.md', 'text/markdown;charset=utf-8')}><Download size={13} /> Export full result</button>
           <button onClick={onRegenerate} disabled={busy}><RefreshCw size={13} className={busy ? 'spin' : ''} /> Regenerate</button>
         </div>
       </div>
       {notice && <div className="inline-notice"><Check size={13} /> {notice}</div>}
 
       {result.mermaid && <MermaidPreview code={result.mermaid} title={result.title} />}
+
+      {result.coverage?.trackable && (
+        <section className={`source-coverage ${result.coverage.complete ? 'coverage-complete' : 'coverage-warning'}`}>
+          <div className="coverage-heading">
+            <div>
+              <div className="eyebrow">SOURCE COVERAGE</div>
+              <h3>{result.coverage.actual_count} source record{result.coverage.actual_count === 1 ? '' : 's'} preserved</h3>
+              <p>{result.coverage.complete ? 'All records detected in the extracted source are included below.' : `The source refers to ${result.coverage.expected_count} items, but only ${result.coverage.actual_count} could be extracted.`}</p>
+            </div>
+            <div className="coverage-count"><strong>{result.coverage.actual_count}</strong><span> / {result.coverage.expected_count} expected</span></div>
+          </div>
+          {!result.coverage.complete && <div className="coverage-warning-text">{result.coverage.warning} Check that the uploaded PDF contains selectable text and all pages were included. DataMind will not fabricate missing projects.</div>}
+          {result.coverage.complete && result.coverage.warning && <div className="coverage-ok-text">{result.coverage.warning}</div>}
+        </section>
+      )}
+
+      {result.source_table?.headers?.length > 0 && (
+        <section className="complete-source-register">
+          <div className="content-card-head">
+            <div><FileText size={15} /><strong>Complete source register</strong><span className="register-count">{result.source_table.rows?.length || 0} rows</span></div>
+            <button className="text-button" onClick={() => downloadText(buildResultMarkdown({ ...result, content: '' }), 'datamind-source-register.md', 'text/markdown;charset=utf-8')}><Download size={13} /> Export register</button>
+          </div>
+          <div className="table-wrap source-register-table"><table className="comparison-table"><thead><tr>{result.source_table.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead><tbody>{(result.source_table.rows || []).map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table></div>
+        </section>
+      )}
+
+      {!result.source_table && result.source_items?.length > 0 && (
+        <section className="complete-source-register">
+          <div className="content-card-head"><div><FileText size={15} /><strong>Complete source items</strong><span className="register-count">{result.source_items.length} items</span></div></div>
+          <ol className="source-item-list">{result.source_items.map((item, index) => <li key={`${item.label || 'item'}-${index}`}><strong>{item.label || `Item ${index + 1}`}</strong><p>{item.details || Object.entries(item.fields || {}).map(([key, value]) => `${key}: ${value}`).join(' · ')}</p></li>)}</ol>
+        </section>
+      )}
+
+      {(result.cards?.length > 0 || result.source_table?.headers?.length > 0 || result.table?.headers?.length > 0) && (
+        <div className="visual-export-row">
+          <div><strong>Visual output</strong><span>Save these cards or this comparison as a high-resolution PNG image.</span></div>
+          <button className="secondary-button small" onClick={exportVisual}><Download size={13} /> Download PNG</button>
+        </div>
+      )}
 
       {result.cards?.length > 0 && result.format === 'flashcards' && (
         <div className="flashcard-grid">
@@ -88,7 +166,7 @@ export default function ResultPanel({ result, onChange, onRefine, onRegenerate, 
         </div>
       )}
 
-      {result.table?.headers?.length > 0 && (
+      {!result.source_table && result.table?.headers?.length > 0 && (
         <div className="table-wrap"><table className="comparison-table"><thead><tr>{result.table.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead><tbody>{(result.table.rows || []).map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table></div>
       )}
 

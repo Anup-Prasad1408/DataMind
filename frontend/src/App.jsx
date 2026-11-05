@@ -122,7 +122,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [file, setFile] = useState(null);
   const [format, setFormat] = useState('flowchart');
-  const [detail, setDetail] = useState('medium');
+  const [detail, setDetail] = useState('detailed');
   const [language, setLanguage] = useState('English');
   const [complexity, setComplexity] = useState('beginner');
   const [audience, setAudience] = useState('students');
@@ -309,7 +309,7 @@ export default function App() {
     setFile(null);
     setFormat(project.format || 'structured_notes');
     if (project.options_snapshot) {
-      setDetail(project.options_snapshot.detail || 'medium');
+      setDetail(project.options_snapshot.detail || 'detailed');
       setLanguage(project.options_snapshot.language || 'English');
       setComplexity(project.options_snapshot.complexity || 'beginner');
       setAudience(project.options_snapshot.audience || 'students');
@@ -362,7 +362,7 @@ export default function App() {
           <div className="page-intro"><div><div className="eyebrow">AI KNOWLEDGE WORKSPACE</div><h1>Transformation studio</h1><p>Turn complex information into clear, structured knowledge.</p></div><div className="intro-sparkle"><WandSparkles size={18}/></div></div>
           <div className={`panel source-panel ${dragging ? 'drag-active' : ''}`} ref={sourcePanelRef} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); }} onDrop={(event) => { event.preventDefault(); setDragging(false); acceptFile(event.dataTransfer.files?.[0]); }}>
             <div className="panel-heading"><div className="step-number">01</div><div><h2>Add your content</h2><p>Paste text or upload a document to get started.</p></div><span className="input-privacy"><ShieldCheck size={13}/> Private workspace</span></div>
-            <textarea className="source-input" value={input} onChange={(event) => { setInput(event.target.value); if (file) setFile(null); setError(''); }} placeholder="Paste your notes, article, research, or any information here…" maxLength={40000}/>
+            <textarea className="source-input" value={input} onChange={(event) => { setInput(event.target.value); if (file) setFile(null); setError(''); }} placeholder="Paste your notes, article, research, or any information here…" maxLength={100000}/>
             <div className="source-footer"><span>{characterCount.toLocaleString()} / 40,000 characters</span><div className="source-actions"><input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" hidden onChange={selectFile}/><button className="upload-button" onClick={() => fileInputRef.current?.click()}><CloudUpload size={14}/> Upload document</button><button className="sample-button" onClick={() => { setInput(SAMPLE_TEXT); setFile(null); setError(''); }}>Use sample</button></div></div>
             <div className="supported-types">Supported: PDF, DOCX, TXT, MD · Max 8 MB · Or drag a file into this panel</div>
             {file && <div className="selected-file"><FileText size={15}/><span>{file.name}</span><small>{(file.size / 1024 / 1024).toFixed(2)} MB</small><button onClick={() => setFile(null)} aria-label="Remove file"><X size={14}/></button></div>}
