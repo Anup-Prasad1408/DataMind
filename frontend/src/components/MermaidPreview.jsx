@@ -1,68 +1,540 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import mermaid from 'mermaid';
 import DOMPurify from 'dompurify';
-import { Check, Code2, Copy, Download, Maximize2, Minus, Plus, X } from 'lucide-react';
-import { copyToClipboard, downloadBlob, exportSvgAsPng } from '../utils/export';
 
-mermaid.initialize({ startOnLoad: false, theme: 'base', securityLevel: 'strict', fontFamily: 'DM Sans, sans-serif', flowchart: { curve: 'basis', htmlLabels: false }, themeVariables: { primaryColor: '#eef0ff', primaryTextColor: '#1b2540', primaryBorderColor: '#8992ed', lineColor: '#8791b2', secondaryColor: '#e5f7f1', tertiaryColor: '#fff5e9', fontSize: '14px' } });
+import {
+  Check,
+  Code2,
+  Copy,
+  Download,
+  Maximize2,
+  Minus,
+  Plus,
+  X,
+} from 'lucide-react';
 
-export default function MermaidPreview({ code, title }) {
-  const [markup, setMarkup] = useState('');
-  const [error, setError] = useState('');
-  const [zoom, setZoom] = useState(1);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [showCode, setShowCode] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const hostRef = useRef(null);
-  const renderId = useMemo(() => `dm-${Math.random().toString(36).slice(2)}`, []);
+import {
+  copyToClipboard,
+  downloadBlob,
+  exportSvgAsPng,
+} from '../utils/export';
+
+
+function normalizeMermaidCode(code) {
+  if (!code) {
+    return '';
+  }
+
+  let cleaned = String(code)
+    .trim();
+
+  // Remove markdown fences if AI accidentally
+  // returns them.
+  cleaned = cleaned
+    .replace(/^```mermaid\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  return cleaned;
+}
+
+
+mermaid.initialize({
+  startOnLoad: false,
+
+  theme: 'base',
+
+  securityLevel: 'strict',
+
+  fontFamily:
+    'DM Sans, Arial, sans-serif',
+
+  flowchart: {
+    curve: 'basis',
+
+    // HTML labels can sometimes disappear
+    // after SVG sanitization.
+    htmlLabels: false,
+
+    useMaxWidth: true,
+  },
+
+  themeVariables: {
+    background: 'transparent',
+
+    primaryColor: '#eef0ff',
+
+    primaryTextColor: '#202a43',
+
+    primaryBorderColor:
+      '#7d84df',
+
+    lineColor:
+      '#8791b2',
+
+    secondaryColor:
+      '#e5f7f1',
+
+    secondaryTextColor:
+      '#202a43',
+
+    secondaryBorderColor:
+      '#63ad98',
+
+    tertiaryColor:
+      '#fff5e9',
+
+    tertiaryTextColor:
+      '#202a43',
+
+    tertiaryBorderColor:
+      '#d7a567',
+
+    nodeTextColor:
+      '#202a43',
+
+    textColor:
+      '#202a43',
+
+    edgeLabelBackground:
+      '#ffffff',
+
+    fontSize:
+      '14px',
+  },
+});
+
+
+export default function MermaidPreview({
+  code,
+  title,
+}) {
+  const [markup, setMarkup] =
+    useState('');
+
+  const [error, setError] =
+    useState('');
+
+  const [zoom, setZoom] =
+    useState(1);
+
+  const [fullscreen, setFullscreen] =
+    useState(false);
+
+  const [showCode, setShowCode] =
+    useState(false);
+
+  const [copied, setCopied] =
+    useState(false);
+
+  const hostRef =
+    useRef(null);
+
+  const renderId =
+    useMemo(
+      () =>
+        `dm-${Math.random()
+          .toString(36)
+          .slice(2)}`,
+      []
+    );
+
 
   useEffect(() => {
     let cancelled = false;
+
     async function renderDiagram() {
-      if (!code?.trim()) { setMarkup(''); setError('No diagram code was returned.'); return; }
+      const normalized =
+        normalizeMermaidCode(
+          code
+        );
+
+      if (!normalized) {
+        setMarkup('');
+        setError(
+          'No diagram code was returned.'
+        );
+        return;
+      }
+
       try {
-        const { svg } = await mermaid.render(renderId, code);
-        if (!cancelled) { setMarkup(DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } })); setError(''); }
+        const { svg } =
+          await mermaid.render(
+            renderId,
+            normalized
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        const sanitized =
+          DOMPurify.sanitize(
+            svg,
+            {
+              USE_PROFILES: {
+                svg: true,
+                svgFilters: true,
+              },
+            }
+          );
+
+        setMarkup(
+          sanitized
+        );
+
+        setError('');
+
       } catch (err) {
-        if (!cancelled) { setMarkup(''); setError(err?.message?.split('\n')[0] || 'This diagram could not be rendered.'); }
+
+        if (!cancelled) {
+
+          console.error(
+            'Mermaid render error:',
+            err
+          );
+
+          setMarkup('');
+
+          setError(
+            err?.message
+              ?.split('\n')[0]
+              ||
+              'This diagram could not be rendered.'
+          );
+        }
       }
     }
+
     renderDiagram();
-    return () => { cancelled = true; };
-  }, [code, renderId]);
+
+    return () => {
+      cancelled = true;
+    };
+
+  }, [
+    code,
+    renderId,
+  ]);
+
 
   async function copyDiagramCode() {
-    try { await copyToClipboard(code); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }
-    catch { setError('Clipboard access was blocked by this browser.'); }
+    try {
+
+      await copyToClipboard(
+        normalizeMermaidCode(
+          code
+        )
+      );
+
+      setCopied(true);
+
+      window.setTimeout(
+        () =>
+          setCopied(false),
+        1800
+      );
+
+    } catch {
+
+      setError(
+        'Clipboard access was blocked by this browser.'
+      );
+    }
   }
+
 
   function downloadSvg() {
-    const svg = hostRef.current?.querySelector('svg');
-    if (!svg) return;
-    const clean = DOMPurify.sanitize(new XMLSerializer().serializeToString(svg), { USE_PROFILES: { svg: true, svgFilters: true } });
-    downloadBlob(new Blob([clean], { type: 'image/svg+xml;charset=utf-8' }), 'datamind-diagram.svg');
+
+    const svg =
+      hostRef.current
+        ?.querySelector(
+          'svg'
+        );
+
+    if (!svg) {
+      return;
+    }
+
+    const clean =
+      DOMPurify.sanitize(
+        new XMLSerializer()
+          .serializeToString(
+            svg
+          ),
+        {
+          USE_PROFILES: {
+            svg: true,
+            svgFilters: true,
+          },
+        }
+      );
+
+    downloadBlob(
+      new Blob(
+        [clean],
+        {
+          type:
+            'image/svg+xml;charset=utf-8',
+        }
+      ),
+      'datamind-diagram.svg'
+    );
   }
 
+
+  function zoomOut() {
+    setZoom(
+      (value) =>
+        Math.max(
+          0.55,
+          +(
+            value - 0.1
+          ).toFixed(2)
+        )
+    );
+  }
+
+
+  function zoomIn() {
+    setZoom(
+      (value) =>
+        Math.min(
+          1.8,
+          +(
+            value + 0.1
+          ).toFixed(2)
+        )
+    );
+  }
+
+
   return (
-    <div className={`diagram-shell ${fullscreen ? 'diagram-fullscreen' : ''}`}>
+    <div
+      className={
+        `diagram-shell ${
+          fullscreen
+            ? 'diagram-fullscreen'
+            : ''
+        }`
+      }
+    >
+
       <div className="diagram-toolbar">
-        <div className="diagram-title"><span className="live-dot" />{title || 'Diagram preview'}</div>
+
+        <div className="diagram-title">
+          <span className="live-dot" />
+          {title ||
+            'Diagram preview'}
+        </div>
+
+
         <div className="diagram-actions">
-          <button className="diagram-action" onClick={() => setShowCode((v) => !v)} title="Toggle Mermaid code"><Code2 size={15} /><span>Code</span></button>
-          <button className="diagram-action" onClick={copyDiagramCode} title="Copy Mermaid source">{copied ? <Check size={15} /> : <Copy size={15} />}<span>{copied ? 'Copied' : 'Copy code'}</span></button>
-          <button className="diagram-action" onClick={() => setZoom((v) => Math.max(0.55, +(v - 0.1).toFixed(2)))} title="Zoom out"><Minus size={15} /></button>
-          <span className="zoom-value">{Math.round(zoom * 100)}%</span>
-          <button className="diagram-action" onClick={() => setZoom((v) => Math.min(1.8, +(v + 0.1).toFixed(2)))} title="Zoom in"><Plus size={15} /></button>
-          <button className="diagram-action" onClick={downloadSvg} title="Download SVG"><Download size={15} /><span>SVG</span></button>
-          <button className="diagram-action" onClick={() => exportSvgAsPng(hostRef.current?.querySelector('svg')).catch((err) => setError(err.message))} title="Download PNG"><span>PNG</span></button>
-          <button className="diagram-action" onClick={() => setFullscreen((v) => !v)} title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}>{fullscreen ? <X size={15} /> : <Maximize2 size={15} />}</button>
+
+          <button
+            className="diagram-action"
+            onClick={() =>
+              setShowCode(
+                (value) =>
+                  !value
+              )
+            }
+            title="Toggle Mermaid code"
+          >
+            <Code2 size={15} />
+            <span>
+              Code
+            </span>
+          </button>
+
+
+          <button
+            className="diagram-action"
+            onClick={
+              copyDiagramCode
+            }
+            title="Copy Mermaid source"
+          >
+            {copied ? (
+              <Check size={15} />
+            ) : (
+              <Copy size={15} />
+            )}
+
+            <span>
+              {copied
+                ? 'Copied'
+                : 'Copy code'}
+            </span>
+          </button>
+
+
+          <button
+            className="diagram-action"
+            onClick={
+              zoomOut
+            }
+            title="Zoom out"
+          >
+            <Minus size={15} />
+          </button>
+
+
+          <span className="zoom-value">
+            {Math.round(
+              zoom * 100
+            )}
+            %
+          </span>
+
+
+          <button
+            className="diagram-action"
+            onClick={
+              zoomIn
+            }
+            title="Zoom in"
+          >
+            <Plus size={15} />
+          </button>
+
+
+          <button
+            className="diagram-action"
+            onClick={
+              downloadSvg
+            }
+            title="Download SVG"
+          >
+            <Download size={15} />
+            <span>
+              SVG
+            </span>
+          </button>
+
+
+          <button
+            className="diagram-action"
+            onClick={() =>
+              exportSvgAsPng(
+                hostRef.current
+                  ?.querySelector(
+                    'svg'
+                  )
+              ).catch(
+                (err) =>
+                  setError(
+                    err.message
+                  )
+              )
+            }
+            title="Download PNG"
+          >
+            <span>
+              PNG
+            </span>
+          </button>
+
+
+          <button
+            className="diagram-action"
+            onClick={() =>
+              setFullscreen(
+                (value) =>
+                  !value
+              )
+            }
+            title={
+              fullscreen
+                ? 'Exit fullscreen'
+                : 'Fullscreen'
+            }
+          >
+            {fullscreen ? (
+              <X size={15} />
+            ) : (
+              <Maximize2 size={15} />
+            )}
+          </button>
+
         </div>
       </div>
-      {showCode && <pre className="mermaid-code"><code>{code}</code></pre>}
-      <div className="diagram-canvas" ref={hostRef}>
-        {error ? <div className="diagram-error"><Code2 size={24} /><strong>Diagram preview unavailable</strong><p>{error}</p><small>You can still open Code and copy the Mermaid source.</small></div> : <div className="diagram-art" style={{ transform: `scale(${zoom})` }} dangerouslySetInnerHTML={{ __html: markup }} />}
+
+
+      {showCode && (
+        <pre className="mermaid-code">
+          <code>
+            {normalizeMermaidCode(
+              code
+            )}
+          </code>
+        </pre>
+      )}
+
+
+      <div
+        className="diagram-canvas"
+        ref={hostRef}
+      >
+
+        {error ? (
+          <div className="diagram-error">
+
+            <Code2 size={24} />
+
+            <strong>
+              Diagram preview unavailable
+            </strong>
+
+            <p>
+              {error}
+            </p>
+
+            <small>
+              You can still open Code
+              and copy the Mermaid
+              source.
+            </small>
+
+          </div>
+        ) : (
+          <div
+            className="diagram-art"
+            style={{
+              transform:
+                `scale(${zoom})`,
+            }}
+            dangerouslySetInnerHTML={{
+              __html:
+                markup,
+            }}
+          />
+        )}
+
       </div>
-      {fullscreen && <button className="fullscreen-exit" onClick={() => setFullscreen(false)}>Exit fullscreen <X size={15} /></button>}
+
+
+      {fullscreen && (
+        <button
+          className="fullscreen-exit"
+          onClick={() =>
+            setFullscreen(
+              false
+            )
+          }
+        >
+          Exit fullscreen
+          <X size={15} />
+        </button>
+      )}
+
     </div>
   );
 }
