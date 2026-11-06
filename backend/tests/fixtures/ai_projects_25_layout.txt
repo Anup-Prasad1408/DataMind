@@ -1,0 +1,51 @@
+Sr.No    Project ID                  Domain                     Samsung-Based AI Capstone Project                          Real Problem Use Case                                                           AI Technologies
+
+1        SIC 2.0-01                  Smart Home                 AI Energy Saver for Smart Homes                            Users waste electricity due to ineﬃcient appliance usage                        ML Forecasting, IoT Analytics, AI Recommendation
+
+2        SIC 2.0-02                  Smart Home                 AI Home Appliance Usage Optimizer                          Smart appliances need personalized operation recommendations                    Machine Learning, Data Analytics
+
+3        SIC 2.0-03                  Smart Home                 AI Indoor Air Quality Assistant                            Users need healthier indoor environments                                        Sensor Data Analysis, ML Prediction
+
+4        SIC 2.0-04                  Mobile AI                  AI Personal Smartphone Assistant                           Users need intelligent task automation                                          LLM, NLP, AI Agents
+
+5        SIC 2.0-05                  Mobile AI                  AI Smart Notiﬁcation Manager                               Users receive too many unnecessary notiﬁcations                                 NLP, Classiﬁcation, Personalization
+
+6        SIC 2.0-06                  Mobile AI                  AI Battery Usage Prediction System                         Smartphone users face battery optimization issues                               Time Series Prediction, ML
+
+7        SIC 2.0-07                  Mobile AI                  AI App Usage Pattern Analyzer                              Users need insights about digital habits                                        Clustering, Analytics
+
+8        SIC 2.0-08                  Accessibility              AI Sign Language Communication Assistant                   Hearing-impaired users face communication barriers                              Computer Vision, Deep Learning
+
+9        SIC 2.0-09                  Accessibility              AI Voice-to-Text Accessibility Tool                        Hearing-impaired users need real-time communication support                     Speech Recognition, NLP
+
+10       SIC 2.0-10                  Accessibility              AI Visual Assistant for Visually Impaired Users            Visually impaired users need object/environment understanding                   Computer Vision, CNN
+
+11       SIC 2.0-11                  Healthcare                 AI Personal Wellness Monitoring Assistant                  Users need personalized health habit tracking                                   ML, Recommendation, Gen AI
+
+12       SIC 2.0-12                  Healthcare                 AI Sleep Pattern Analysis System                           Poor sleep aﬀects health and productivity                                       Data Analytics, ML Prediction
+
+13       SIC 2.0-13                  Healthcare                 AI Fitness Routine Generator                               Users need personalized exercise guidance                                       Gen AI, Recommendation System
+
+14       SIC 2.0-14                  Sustainability             AI E-Waste Classiﬁcation & Recycling Assistant             Electronic waste sorting is ineﬃcient                                           Computer Vision, CNN
+
+15       SIC 2.0-15                  Sustainability             AI Carbon Footprint Tracker                                Individuals need awareness of environmental impact                              ML Analytics, Gen AI Recommendations
+
+16       SIC 2.0-16                  Sustainability             AI Smart Water Usage Monitor                               Water wastage needs early detection                                             IoT, Prediction Models
+
+17       SIC 2.0-17                  Consumer Electronics       AI Product Support Assistant                               Customers struggle with device troubleshooting                                  RAG, LLM, Knowledge Base
+
+18       SIC 2.0-18                  Consumer Electronics       AI Device Fault Prediction System                          Electronic devices fail unexpectedly                                            Predictive Maintenance, ML
+
+19       SIC 2.0-19                  Consumer Electronics       AI Warranty Claim Analyzer                                 Companies spend time processing warranty cases                                  NLP, Document AI
+
+20       SIC 2.0-20                  Manufacturing              AI Electronics Quality Inspection System                   Manual quality checking in factories is slow                                    Computer Vision, Deep Learning
+
+21       SIC 2.0-21                  Manufacturing              AI Production Line Optimization Assistant                  Manufacturing lines need eﬃciency improvement                                   ML Optimization, Analytics
+
+22       SIC 2.0-22                  Cybersecurity              AI Mobile Security Threat Analyzer                         Smartphones face increasing security threats                                    Anomaly Detection, ML
+
+23       SIC 2.0-23                  Cybersecurity              AI Phishing Message Detection for Mobile Users             Users receive harmful messages and links                                        NLP Classiﬁcation
+
+24       SIC 2.0-24                  Education                  AI Learning Companion for Students                         Students need personalized learning support                                     LLM, RAG, Recommendation
+
+25       SIC 2.0-25                  Education                  AI Skill Development Roadmap Generator                     Students need career-aligned skill planning                                     Gen AI, Recommendation
